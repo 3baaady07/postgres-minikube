@@ -1,0 +1,18 @@
+[req]
+distinguished_name = dname
+x509_extensions = cert_ext
+prompt = no
+
+[dname]
+CN = RootCA
+C = SA
+ST = QASSIM
+L = ONAIZAH
+O = HARPONAJ INC.
+OU = Some Unit
+emailAddress = info@harponaj.com
+
+[cert_ext]
+basicConstraints = CA:TRUE, pathlen:0
+keyUsage = keyCertSign, cRLSign
+subjectKeyIdentifier = hash

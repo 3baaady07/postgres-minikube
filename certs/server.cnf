@@ -1,0 +1,27 @@
+[req]
+distinguished_name = dname
+x509_extensions = cert_ext
+prompt = no
+
+[dname]
+CN = 192.168.59.120
+C = SA
+ST = QASSIM
+L = ONAIZAH
+O = HARPONAJ INC.
+OU = Some Unit
+emailAddress = info@harponaj.com
+
+[cert_ext]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, nonRepudiation
+extendedKeyUsage = codeSigning, serverAuth, clientAuth
+subjectKeyIdentifier = hash
+subjectAltName = @sans
+authorityKeyIdentifier = keyid, issuer
+authorityInfoAccess = OCSP;URI:http://ocsp.myCA/
+authorityInfoAccess = caIssuers;URI:http://myCA/ca.cer
+certificatePolicies = 1.2.4.5.6.7
+
+[sans]
+IP.1 = 192.168.59.120

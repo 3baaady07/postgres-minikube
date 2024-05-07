@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      volumes:
+        - name: cert-volume
+          hostPath:
+            path: /home/ssl
+        - name: server-key
+          emptyDir: {}
+      initContainers:
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: cert-volume
+          mountPath: /home/certs
+        - name: server-key
+          mountPath: /home/server-key
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        command: ["/bin/sh"]
+        args: ["-c", "cp /home/certs/cert.sh /home/ && chmod 0777 /home/cert.sh && /home/cert.sh"]
+      containers:
+      - name: postgres
+        image: postgres
+        volumeMounts:
+          - name: server-key
+            mountPath: /home/server-key
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: certs
+        - name: SSL_CA_FILE
+          value: /home/server-key/minikube_postgres_root.crt
+        - name: SSL_CERT_FILE
+          value: /home/server-key/server.crt
+        - name: SSL_KEY_FILE
+          value: /home/server-key/server.key
+        - name: PGSSLMODE
+          value: verify-full
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-root-username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-root-password
+        args: ["-c", "ssl=on", "-c", "ssl_ca_file=$(SSL_CA_FILE)", "-c", "ssl_cert_file=$(SSL_CERT_FILE)", "-c", "ssl_key_file=$(SSL_KEY_FILE)", "-c", "listen_addresses=*"]
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+   - name: postgres
+     port: 5432
+     nodePort: 30432
+  type: NodePort
+  selector:
+    app: postgres
