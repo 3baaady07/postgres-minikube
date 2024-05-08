@@ -2,3 +2,5 @@
 *.crt
 *.srl
 *.csr
+mount-point/logs/*
+mount-point/logs

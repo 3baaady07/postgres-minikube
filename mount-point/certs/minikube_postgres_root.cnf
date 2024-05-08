@@ -4,7 +4,7 @@ x509_extensions = cert_ext
 prompt = no
 
 [dname]
-CN = RootCA
+CN = minikube_postgres_root
 C = SA
 ST = QASSIM
 L = ONAIZAH

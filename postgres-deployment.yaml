@@ -12,38 +12,48 @@ spec:
         app: postgres
     spec:
       volumes:
-        - name: cert-volume
+        - name: mount-volume
           hostPath:
-            path: /home/ssl
+            path: /home/mount-point
         - name: server-key
+          emptyDir: {}
+        - name: pg-hba
           emptyDir: {}
       initContainers:
       - name: nginx
         image: nginx
         volumeMounts:
-        - name: cert-volume
-          mountPath: /home/certs
+        - name: mount-volume
+          mountPath: /home/mount-point
         - name: server-key
           mountPath: /home/server-key
+        - name: pg-hba
+          mountPath: /home/pg_hba
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
         command: ["/bin/sh"]
-        args: ["-c", "cp /home/certs/cert.sh /home/ && chmod 0777 /home/cert.sh && /home/cert.sh"]
+        args: ["-c", "cp /home/mount-point/generate-certs.sh /home/ && chmod 0700 /home/generate-certs.sh && /home/generate-certs.sh"]
       containers:
       - name: postgres
+        securityContext:
+          runAsUser: 999
         image: postgres
         volumeMounts:
+          - name: mount-volume
+            mountPath: /home/mount-point
           - name: server-key
             mountPath: /home/server-key
+          - name: pg-hba
+            mountPath: /docker-entrypoint-initdb.d
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
         env:
         - name: POSTGRES_HOST_AUTH_METHOD
-          value: certs
+          value: cert
         - name: SSL_CA_FILE
           value: /home/server-key/minikube_postgres_root.crt
         - name: SSL_CERT_FILE
@@ -52,6 +62,8 @@ spec:
           value: /home/server-key/server.key
         - name: PGSSLMODE
           value: verify-full
+        # - name: PGDATA
+        #   value: /home/server-key/data/
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
@@ -62,7 +74,31 @@ spec:
             secretKeyRef:
               name: postgres-secret
               key: postgres-root-password
-        args: ["-c", "ssl=on", "-c", "ssl_ca_file=$(SSL_CA_FILE)", "-c", "ssl_cert_file=$(SSL_CERT_FILE)", "-c", "ssl_key_file=$(SSL_KEY_FILE)", "-c", "listen_addresses=*"]
+        args: 
+        - "-c"
+        - "ssl=on"
+        - "-c"
+        - "log_directory=/home/mount-point/logs/postgres"
+        - "-c"
+        - "ssl_ca_file=$(SSL_CA_FILE)"
+        - "-c"
+        - "ssl_cert_file=$(SSL_CERT_FILE)"
+        - "-c"
+        - "ssl_key_file=$(SSL_KEY_FILE)"
+        - "-c"
+        - "listen_addresses=*"
+        - "-c"
+        - "logging_collector=on"
+        - "-c"
+        - "log_destination=stderr"
+        - "-c"
+        - "log_filename=postgresql-%Y-%m-%d_%H%M%S.log"
+        - "-c"
+        - "log_file_mode=0666"
+        - "-c"
+        - "log_min_messages=INFO"
+        - "-c"
+        - "log_error_verbosity=VERBOSE"
         
 ---
 apiVersion: v1
