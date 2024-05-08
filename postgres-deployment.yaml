@@ -17,8 +17,6 @@ spec:
             path: /home/mount-point
         - name: server-key
           emptyDir: {}
-        - name: pg-hba
-          emptyDir: {}
       initContainers:
       - name: nginx
         image: nginx
@@ -27,14 +25,17 @@ spec:
           mountPath: /home/mount-point
         - name: server-key
           mountPath: /home/server-key
-        - name: pg-hba
-          mountPath: /home/pg_hba
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
         command: ["/bin/sh"]
-        args: ["-c", "cp /home/mount-point/generate-certs.sh /home/ && chmod 0700 /home/generate-certs.sh && /home/generate-certs.sh"]
+        args: 
+        - "-c"
+        - >
+          cp /home/mount-point/generate-certs.sh /home/ &&
+          chmod 0700 /home/generate-certs.sh &&
+          /home/generate-certs.sh
       containers:
       - name: postgres
         securityContext:
@@ -45,15 +46,11 @@ spec:
             mountPath: /home/mount-point
           - name: server-key
             mountPath: /home/server-key
-          - name: pg-hba
-            mountPath: /docker-entrypoint-initdb.d
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
         env:
-        - name: POSTGRES_HOST_AUTH_METHOD
-          value: cert
         - name: SSL_CA_FILE
           value: /home/server-key/minikube_postgres_root.crt
         - name: SSL_CERT_FILE
@@ -62,8 +59,6 @@ spec:
           value: /home/server-key/server.key
         - name: PGSSLMODE
           value: verify-full
-        # - name: PGDATA
-        #   value: /home/server-key/data/
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:

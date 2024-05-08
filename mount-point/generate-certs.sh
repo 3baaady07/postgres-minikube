@@ -36,6 +36,4 @@ openssl x509 -req \
    -extfile /home/mount-point/certs/server.cnf
 
 cp /home/server-key/* /home/mount-point/certs/
-chown postgres /home/server-key/*
-
-cp /home/mount-point/postgres.sh /home/pg_hba
+chown postgres:postgres /home/server-key/*
