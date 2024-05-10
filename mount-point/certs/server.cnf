@@ -4,7 +4,7 @@ x509_extensions = cert_ext
 prompt = no
 
 [dname]
-CN = 192.168.59.122
+CN = 192.168.59.123
 C = SA
 ST = QASSIM
 L = ONAIZAH
@@ -24,4 +24,4 @@ authorityInfoAccess = caIssuers;URI:http://myCA/ca.cer
 certificatePolicies = 1.2.4.5.6.7
 
 [sans]
-IP.1 = 192.168.59.122
+IP.1 = 192.168.59.123
